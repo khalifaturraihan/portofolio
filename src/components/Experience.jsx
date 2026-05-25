@@ -15,7 +15,7 @@ export default function Experience({ t }) {
         <div style={{ position: 'absolute', left: 18, top: 10, bottom: 10, width: 2, background: `linear-gradient(to bottom, ${t.accent}, ${t.border})` }} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
           {EXPERIENCE.map((exp, i) => (
-            <div key={i} className="reveal" style={{ display: 'flex', gap: 30, transitionDelay: `${i * 100}ms` }}>
+            <div key={i} className="reveal" style={{ display: 'flex', gap: 'clamp(16px,4vw,30px)', transitionDelay: `${i * 100}ms` }}>
               <div style={{
                 width: 38, height: 38, borderRadius: '50%', flexShrink: 0, zIndex: 1, marginTop: 2,
                 background: i === 0 ? t.accent : t.bg,

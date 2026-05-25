@@ -25,7 +25,7 @@ export default function Contact({ t }) {
             fontFamily: mono, fontSize: 13, fontWeight: 500,
             boxShadow: `0 10px 30px -10px ${t.accent}66`,
           }}>
-            {copied ? '✓ Email copied!' : '✉ raihankhalifatur7@gmail.com'}
+            {copied ? '✓ Copied!' : <><span style={{ display: 'inline' }}>✉ </span><span style={{ wordBreak: 'break-all' }}>raihankhalifatur7@gmail.com</span></>}
           </button>
           <a href="https://linkedin.com/in/khalifaturraihan" target="_blank" rel="noreferrer" className="lift" style={{
             display: 'inline-flex', alignItems: 'center', gap: 10,

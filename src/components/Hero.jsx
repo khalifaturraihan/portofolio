@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { mono, display, serif } from '../themes'
-import { useCountUp } from '../hooks'
-import profileImg from '/profile.png'
+import { useCountUp, useIsMobile } from '../hooks'
+import profileImg from '/profile.webp'
 
 function StatNum({ t, val, suffix, label }) {
   const [n, ref] = useCountUp(val, 1500)
@@ -24,7 +24,7 @@ function Stats({ t }) {
   ]
   return (
     <div style={{
-      display: 'flex', gap: 'clamp(24px,4vw,52px)', flexWrap: 'wrap',
+      display: 'flex', gap: 'clamp(20px,4vw,52px)', flexWrap: 'wrap',
       paddingTop: 30, borderTop: `1px solid ${t.border}`,
     }}>
       {items.map(s => <StatNum key={s.label} t={t} {...s} />)}
@@ -40,6 +40,9 @@ export default function Hero({ t }) {
   const heroRef = useRef(null)
   const photoRef = useRef(null)
   const [parallax, setParallax] = useState({ x: 0, y: 0 })
+  const isMobile = useIsMobile()
+  const pendingMouseRef = useRef(null)
+  const rafRef = useRef(null)
 
   useEffect(() => {
     const full = words[wIdx]
@@ -56,16 +59,26 @@ export default function Hero({ t }) {
   }, [wIdx])
 
   useEffect(() => {
-    const handler = (e) => {
-      if (!heroRef.current) return
-      const r = heroRef.current.getBoundingClientRect()
-      const cx = r.left + r.width / 2
-      const cy = r.top + r.height / 2
-      setParallax({ x: (e.clientX - cx) / r.width, y: (e.clientY - cy) / r.height })
+    if (isMobile) return
+    const handler = (e) => { pendingMouseRef.current = e }
+    const tick = () => {
+      const e = pendingMouseRef.current
+      if (e && heroRef.current) {
+        const r = heroRef.current.getBoundingClientRect()
+        const cx = r.left + r.width / 2
+        const cy = r.top + r.height / 2
+        setParallax({ x: (e.clientX - cx) / r.width, y: (e.clientY - cy) / r.height })
+        pendingMouseRef.current = null
+      }
+      rafRef.current = requestAnimationFrame(tick)
     }
+    rafRef.current = requestAnimationFrame(tick)
     window.addEventListener('mousemove', handler)
-    return () => window.removeEventListener('mousemove', handler)
-  }, [])
+    return () => {
+      window.removeEventListener('mousemove', handler)
+      cancelAnimationFrame(rafRef.current)
+    }
+  }, [isMobile])
 
   const orbitChips = [
     { label: 'Java',        c: t.accent,   rx: 215, ry: 60,  a: 350, s: 18 },
@@ -76,18 +89,21 @@ export default function Hero({ t }) {
     { label: 'REST API',    c: t.accent,   rx: 220, ry: 180, a: 305, s: 19 },
   ]
 
+  const cardW = isMobile ? 260 : 360
+  const cardH = isMobile ? 330 : 460
+
   return (
     <section ref={heroRef} id="about" style={{
       minHeight: '100vh', display: 'flex', alignItems: 'center',
-      padding: '108px clamp(22px,5vw,72px) 80px',
+      padding: isMobile ? '100px 22px 60px' : '108px clamp(22px,5vw,72px) 80px',
       background: t.bg, position: 'relative', overflow: 'hidden',
       transition: 'background 0.35s',
       perspective: 1400,
     }}>
       {/* Blobs */}
-      <div style={{ position: 'absolute', top: '-15%', left: '-10%', width: 720, height: 720, borderRadius: '50%', background: `radial-gradient(circle, ${t.accent}22, transparent 60%)`, filter: 'blur(60px)', pointerEvents: 'none', animation: 'blob-drift-1 22s ease-in-out infinite' }} />
-      <div style={{ position: 'absolute', bottom: '-20%', right: '-10%', width: 640, height: 640, borderRadius: '50%', background: `radial-gradient(circle, ${t.accent3}18, transparent 60%)`, filter: 'blur(80px)', pointerEvents: 'none', animation: 'blob-drift-2 26s ease-in-out infinite' }} />
-      <div style={{ position: 'absolute', top: '30%', right: '20%', width: 420, height: 420, borderRadius: '50%', background: `radial-gradient(circle, ${t.accent2}14, transparent 60%)`, filter: 'blur(70px)', pointerEvents: 'none', animation: 'blob-drift-1 30s ease-in-out infinite reverse' }} />
+      <div style={{ position: 'absolute', top: '-15%', left: '-10%', width: isMobile ? 400 : 720, height: isMobile ? 400 : 720, borderRadius: '50%', background: `radial-gradient(circle, ${t.accent}22, transparent 60%)`, filter: isMobile ? 'blur(40px)' : 'blur(60px)', pointerEvents: 'none', animation: 'blob-drift-1 22s ease-in-out infinite', willChange: 'transform' }} />
+      <div style={{ position: 'absolute', bottom: '-20%', right: '-10%', width: isMobile ? 360 : 640, height: isMobile ? 360 : 640, borderRadius: '50%', background: `radial-gradient(circle, ${t.accent3}18, transparent 60%)`, filter: isMobile ? 'blur(40px)' : 'blur(80px)', pointerEvents: 'none', animation: 'blob-drift-2 26s ease-in-out infinite', willChange: 'transform' }} />
+      {!isMobile && <div style={{ position: 'absolute', top: '30%', right: '20%', width: 420, height: 420, borderRadius: '50%', background: `radial-gradient(circle, ${t.accent2}14, transparent 60%)`, filter: 'blur(70px)', pointerEvents: 'none', animation: 'blob-drift-1 30s ease-in-out infinite reverse', willChange: 'transform' }} />}
 
       {/* Grid */}
       <div className="hero-grid" style={{
@@ -101,8 +117,10 @@ export default function Hero({ t }) {
 
       <div style={{
         maxWidth: 1200, margin: '0 auto', position: 'relative', width: '100%',
-        display: 'grid', gridTemplateColumns: 'minmax(0,1.05fr) minmax(0,1fr)',
-        gap: 'clamp(24px,6vw,80px)', alignItems: 'center',
+        display: 'grid',
+        gridTemplateColumns: isMobile ? '1fr' : 'minmax(0,1.05fr) minmax(0,1fr)',
+        gap: isMobile ? 48 : 'clamp(24px,6vw,80px)',
+        alignItems: 'center',
       }}>
         {/* LEFT */}
         <div style={{ animation: 'fade-up 0.8s ease both', animationDelay: '0.1s' }}>
@@ -148,21 +166,24 @@ export default function Hero({ t }) {
         </div>
 
         {/* RIGHT — 3D photo */}
-        <div style={{ position: 'relative', height: 'clamp(380px,55vw,560px)', display: 'flex', alignItems: 'center', justifyContent: 'center', transformStyle: 'preserve-3d' }}>
-          {/* Background frame layers */}
-          <div style={{ position: 'absolute', width: 380, height: 480, transform: `translate3d(${parallax.x * 25}px, ${parallax.y * 25}px, -100px) rotateX(${-parallax.y * 8}deg) rotateY(${parallax.x * 8}deg)`, transition: 'transform 0.4s ease-out' }}>
-            <div style={{ position: 'absolute', inset: -40, border: `1px solid ${t.accent}33`, borderRadius: 24, animation: 'pulse-ring 3.5s ease-out infinite' }} />
-            <div style={{ position: 'absolute', inset: -40, border: `1px solid ${t.accent2}33`, borderRadius: 24, animation: 'pulse-ring 3.5s ease-out 1.2s infinite' }} />
-            <div style={{ position: 'absolute', inset: -40, border: `1px solid ${t.accent3}33`, borderRadius: 24, animation: 'pulse-ring 3.5s ease-out 2.4s infinite' }} />
-            <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${t.accent}, ${t.accent3})`, borderRadius: 22, transform: 'translate(22px, 22px)', opacity: 0.85, animation: 'float-y-slow 6s ease-in-out infinite' }} />
-            <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle, ${t.accent2}55 1.2px, transparent 1.3px)`, backgroundSize: '14px 14px', borderRadius: 22, transform: 'translate(-18px, -18px)', opacity: 0.7, animation: 'float-y 5s ease-in-out infinite' }} />
-          </div>
+        <div style={{ position: 'relative', height: isMobile ? cardH + 40 : 'clamp(380px,55vw,560px)', display: 'flex', alignItems: 'center', justifyContent: 'center', transformStyle: 'preserve-3d' }}>
+          {/* Background frame layers — hidden on mobile */}
+          {!isMobile && (
+            <div style={{ position: 'absolute', width: 380, height: 480, transform: `translate3d(${parallax.x * 25}px, ${parallax.y * 25}px, -100px) rotateX(${-parallax.y * 8}deg) rotateY(${parallax.x * 8}deg)`, transition: 'transform 0.4s ease-out' }}>
+              <div style={{ position: 'absolute', inset: -40, border: `1px solid ${t.accent}33`, borderRadius: 24, animation: 'pulse-ring 3.5s ease-out infinite' }} />
+              <div style={{ position: 'absolute', inset: -40, border: `1px solid ${t.accent2}33`, borderRadius: 24, animation: 'pulse-ring 3.5s ease-out 1.2s infinite' }} />
+              <div style={{ position: 'absolute', inset: -40, border: `1px solid ${t.accent3}33`, borderRadius: 24, animation: 'pulse-ring 3.5s ease-out 2.4s infinite' }} />
+              <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${t.accent}, ${t.accent3})`, borderRadius: 22, transform: 'translate(22px, 22px)', opacity: 0.85, animation: 'float-y-slow 6s ease-in-out infinite' }} />
+              <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle, ${t.accent2}55 1.2px, transparent 1.3px)`, backgroundSize: '14px 14px', borderRadius: 22, transform: 'translate(-18px, -18px)', opacity: 0.7, animation: 'float-y 5s ease-in-out infinite' }} />
+            </div>
+          )}
 
           {/* Photo card */}
           <div ref={photoRef} className="photo-card" style={{
-            position: 'relative', width: 360, height: 460,
-            transform: `rotateX(${-parallax.y * 12}deg) rotateY(${parallax.x * 12}deg) translateZ(40px)`,
+            position: 'relative', width: cardW, height: cardH,
+            transform: isMobile ? 'none' : `rotateX(${-parallax.y * 12}deg) rotateY(${parallax.x * 12}deg) translateZ(40px)`,
             transition: 'transform 0.4s ease-out',
+            willChange: isMobile ? 'auto' : 'transform',
             borderRadius: 24,
             background: `linear-gradient(160deg, ${t.surface2}, ${t.surface})`,
             border: `1.5px solid ${t.borderHi}`,
@@ -207,8 +228,8 @@ export default function Hero({ t }) {
             </svg>
           </div>
 
-          {/* Orbit chips */}
-          {orbitChips.map((chip, idx) => {
+          {/* Orbit chips — desktop only */}
+          {!isMobile && orbitChips.map((chip, idx) => {
             const angle = (chip.a * Math.PI) / 180
             const x = Math.cos(angle) * chip.rx
             const y = Math.sin(angle) * chip.ry
@@ -231,10 +252,12 @@ export default function Hero({ t }) {
             )
           })}
 
-          {/* Decorative shapes */}
-          <div style={{ position: 'absolute', top: '8%', left: '8%', width: 60, height: 60, border: `2px solid ${t.accent2}66`, borderRadius: 12, transform: `rotate(15deg) translateZ(20px) translate(${parallax.x * -30}px, ${parallax.y * -30}px)`, transition: 'transform 0.4s ease-out', animation: 'spin-slow 20s linear infinite' }} />
-          <div style={{ position: 'absolute', bottom: '10%', right: '5%', width: 0, height: 0, borderLeft: '26px solid transparent', borderRight: '26px solid transparent', borderBottom: `44px solid ${t.accent3}55`, transform: `translateZ(20px) translate(${parallax.x * 40}px, ${parallax.y * 40}px)`, transition: 'transform 0.4s ease-out', animation: 'float-y-slow 4s ease-in-out infinite' }} />
-          <div style={{ position: 'absolute', top: '55%', right: '3%', width: 18, height: 18, borderRadius: '50%', background: t.accent, boxShadow: `0 0 30px ${t.accent}`, transform: `translateZ(30px) translate(${parallax.x * 20}px, ${parallax.y * 20}px)`, transition: 'transform 0.4s ease-out' }} />
+          {/* Decorative shapes — desktop only */}
+          {!isMobile && <>
+            <div style={{ position: 'absolute', top: '8%', left: '8%', width: 60, height: 60, border: `2px solid ${t.accent2}66`, borderRadius: 12, transform: `rotate(15deg) translateZ(20px) translate(${parallax.x * -30}px, ${parallax.y * -30}px)`, transition: 'transform 0.4s ease-out', animation: 'spin-slow 20s linear infinite' }} />
+            <div style={{ position: 'absolute', bottom: '10%', right: '5%', width: 0, height: 0, borderLeft: '26px solid transparent', borderRight: '26px solid transparent', borderBottom: `44px solid ${t.accent3}55`, transform: `translateZ(20px) translate(${parallax.x * 40}px, ${parallax.y * 40}px)`, transition: 'transform 0.4s ease-out', animation: 'float-y-slow 4s ease-in-out infinite' }} />
+            <div style={{ position: 'absolute', top: '55%', right: '3%', width: 18, height: 18, borderRadius: '50%', background: t.accent, boxShadow: `0 0 30px ${t.accent}`, transform: `translateZ(30px) translate(${parallax.x * 20}px, ${parallax.y * 20}px)`, transition: 'transform 0.4s ease-out' }} />
+          </>}
         </div>
       </div>
 

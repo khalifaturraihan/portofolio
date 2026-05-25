@@ -3,11 +3,14 @@ import { display, mono } from '../themes'
 import { PROJECTS } from '../data'
 import { SectionLabel, Tag, SectionWrap } from './shared'
 import { DiagramAviation, DiagramFinance, DiagramEgov, DiagramHris } from './Diagrams'
+import { useIsMobile } from '../hooks'
 
 const diagrams = { aviation: DiagramAviation, finance: DiagramFinance, egov: DiagramEgov, hris: DiagramHris }
 
 export default function Projects({ t }) {
   const [active, setActive] = useState(0)
+  const isMobile = useIsMobile()
+
   return (
     <SectionWrap id="projects" t={t} dark>
       <div className="reveal">
@@ -36,10 +39,11 @@ export default function Projects({ t }) {
           <div key={i} className="lift" style={{
             background: t.surface2, border: `1px solid ${t.border}`,
             borderRadius: 16, overflow: 'hidden',
-            display: 'grid', gridTemplateColumns: '1fr 1.15fr',
+            display: 'grid',
+            gridTemplateColumns: isMobile ? '1fr' : '1fr 1.15fr',
             animation: 'fade-up 0.5s ease both',
           }}>
-            <div style={{ padding: '30px 32px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: isMobile ? '24px 20px' : '30px 32px', display: 'flex', flexDirection: 'column' }}>
               <p style={{ fontFamily: mono, fontSize: 10, color: t.muted, marginBottom: 8 }}>{proj.company}</p>
               <h3 style={{ fontFamily: display, fontSize: 20, fontWeight: 600, color: t.text, marginBottom: 12, letterSpacing: '-0.5px' }}>{proj.title}</h3>
               <p style={{ fontSize: 13.5, color: t.sub, lineHeight: 1.8, flex: 1 }}>{proj.desc}</p>
@@ -47,7 +51,12 @@ export default function Projects({ t }) {
                 {proj.tech.map(tag => <Tag key={tag} t={t}>{tag}</Tag>)}
               </div>
             </div>
-            <div style={{ borderLeft: `1px solid ${t.border}`, padding: '18px 14px', background: t.bg, display: 'flex', alignItems: 'center', minHeight: 220 }}>
+            <div style={{
+              borderLeft: isMobile ? 'none' : `1px solid ${t.border}`,
+              borderTop: isMobile ? `1px solid ${t.border}` : 'none',
+              padding: '18px 14px', background: t.bg,
+              display: 'flex', alignItems: 'center', minHeight: 220,
+            }}>
               <Diag t={t} />
             </div>
           </div>

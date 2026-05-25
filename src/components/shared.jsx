@@ -23,7 +23,7 @@ export function Tag({ t, children }) {
 export function SectionWrap({ id, t, dark, children }) {
   return (
     <section id={id} style={{
-      padding: '100px clamp(22px,5vw,72px)',
+      padding: 'clamp(60px,8vw,100px) clamp(20px,5vw,72px)',
       background: dark ? t.surface : t.bg,
       borderTop: `1px solid ${t.border}`,
       transition: 'background 0.35s, border-color 0.35s',
